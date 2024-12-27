@@ -3,7 +3,7 @@ import random
 from dotenv import load_dotenv
 from discord import Intents, Client, Interaction
 from discord.ext import commands
-import requests
+from autokattis import OpenKattis
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -64,5 +64,11 @@ async def random_algo(interaction: Interaction):
 @bot.tree.command(name="resources", description="Resources used to learn competitve programming")
 async def resources(interaction: Interaction):
     await interaction.response.send_message(f"Here are some competitive programming resources:\n https://cp-algorithms.com/index.html \n https://xlinux.nist.gov/dads/")
-
+    
+@bot.tree.command(name="random-problem", description="Gives a random problem from Kattis")
+async def random_problem(interaction: Interaction):
+    kt = OpenKattis(os.getenv('KATTIS_USERNAME'),os.getenv('KATTIS_PASSWORD'))
+    problem = kt.suggest()
+    await interaction.response.send_message(f"Try this Kattis problem: {problem}")
+    
 bot.run(TOKEN)

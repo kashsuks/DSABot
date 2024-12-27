@@ -2,3 +2,5 @@ discord
 python-dotenv
 audioop-lts
 requests
+bs4
+autokattis

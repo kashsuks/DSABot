@@ -1,5 +1,6 @@
-import os 
+import os
 import random
+import requests
 from dotenv import load_dotenv
 from discord import Intents, Client, Interaction
 from discord.ext import commands
@@ -47,6 +48,8 @@ ALGORITHMS = [
     "Graph Theory"
 ]
 
+userRatings = {}
+
 @bot.event
 async def on_ready():
     print(f'Logged in as {bot.user}')
@@ -61,7 +64,7 @@ async def random_algo(interaction: Interaction):
     algorithm = random.choice(ALGORITHMS)
     await interaction.response.send_message(f"Learn about this algorithm: {algorithm}")
     
-@bot.tree.command(name="resources", description="Resources used to learn competitve programming")
+@bot.tree.command(name="resources", description="Resources used to learn competitive programming")
 async def resources(interaction: Interaction):
     await interaction.response.send_message(f"Here are some competitive programming resources:\n https://cp-algorithms.com/index.html \n https://xlinux.nist.gov/dads/")
     
@@ -84,5 +87,23 @@ async def random_problem(interaction: Interaction):
     except Exception as e:
         await interaction.followup.send("An error occurred while fetching a problem from Kattis.")
         print(e)
-    
+
+@bot.tree.command(name="set-handle", description="Set your Codeforces handle to get rating information")
+async def set_handle(interaction: Interaction, username: str):
+    url = f"https://codeforces.com/api/user.rating?handle={username}"
+    response = requests.get(url)
+
+    if response.status_code == 200:
+        data = response.json()
+
+        if data['status'] == 'OK' and data['result']:
+            latestRating = data['result'][0]
+            newRating = latestRating['newRating']
+            userRatings[username] = newRating
+            await interaction.response.send_message(f"Your Codeforces rating has been set. Current rating for {username}: {newRating}")
+        else:
+            await interaction.response.send_message(f"No rating data found for {username}. Please check your handle and try again.")
+    else:
+        await interaction.response.send_message(f"Error fetching data for {username}. Please try again later.")
+
 bot.run(TOKEN)

@@ -67,8 +67,22 @@ async def resources(interaction: Interaction):
     
 @bot.tree.command(name="random-problem", description="Gives a random problem from Kattis")
 async def random_problem(interaction: Interaction):
-    kt = OpenKattis(os.getenv('KATTIS_USERNAME'),os.getenv('KATTIS_PASSWORD'))
-    problem = kt.suggest()
-    await interaction.response.send_message(f"Try this Kattis problem: {problem}")
+    await interaction.response.defer()
+    try:
+        kt = OpenKattis(os.getenv('KATTIS_USERNAME'), os.getenv('KATTIS_PASSWORD'))
+        problems = kt.suggest()
+        if not problems:
+            await interaction.followup.send("No problems found. Please try again later.")
+            return
+
+        problem = random.choice(problems)
+        name = problem.get('name', 'Unknown')
+        difficulty = problem.get('difficulty', 'Unknown')
+        link = problem.get('link', 'No link available')
+
+        await interaction.followup.send(f"Here is a Kattis problem for you to try:\n**Name:** {name}\n**Difficulty:** {difficulty}\n**Link:** {link}")
+    except Exception as e:
+        await interaction.followup.send("An error occurred while fetching a problem from Kattis.")
+        print(e)
     
 bot.run(TOKEN)

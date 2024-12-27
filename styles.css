@@ -1,0 +1,138 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
+@font-face {
+    font-family: 'Morlen';
+    src: url('path-to-morlen-font.woff2') format('woff2');
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --black: #171717;
+    --dark-gray: #444444;
+    --red: #DA0037;
+    --white: #EDEDED;
+    --red-transparent: rgba(218, 0, 55, 0.1);
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    line-height: 1.6;
+    background-color: var(--dark-gray);
+    color: var(--white);
+    display: flex;
+    min-height: 100vh;
+}
+
+h1, h2, h3 {
+    font-family: 'Morlen', serif;
+    letter-spacing: -0.02em;
+}
+
+h1 {
+    font-size: 3.5rem;
+    margin-bottom: 1.5rem;
+}
+
+h2 {
+    font-size: 2.5rem;
+    margin: 2rem 0 1rem;
+}
+
+h3 {
+    font-size: 1.8rem;
+    margin: 1.5rem 0 0.8rem;
+}
+
+p, pre, .nav-link {
+    font-family: Arial, sans-serif;
+}
+
+.sidebar {
+    width: 250px;
+    background-color: var(--black);
+    padding: 20px;
+    position: fixed;
+    height: 100vh;
+    left: 0;
+    top: 0;
+    overflow-y: auto;
+}
+
+.nav-link {
+    color: var(--white);
+    text-decoration: none;
+    display: block;
+    padding: 10px;
+    margin-bottom: 5px;
+    border-radius: 3px;
+    transition: background-color 0.3s;
+}
+
+.nav-link:hover {
+    background-color: var(--red-transparent);
+}
+
+.nav-link.active {
+    background-color: var(--red-transparent);
+    border-left: 3px solid var(--red);
+}
+
+.sub-links {
+    margin-left: 20px;
+}
+
+.content {
+    margin-left: 250px;
+    padding: 40px;
+    width: calc(100% - 250px);
+}
+
+pre {
+    background-color: var(--black) !important;
+    padding: 15px;
+    border-radius: 3px;
+    margin: 15px 0;
+}
+
+.theme-button {
+    padding: 10px 15px;
+    background-color: var(--black);
+    color: var(--white);
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+}
+
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--black);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--dark-gray);
+    border-radius: 4px;
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        transform: translateX(-250px);
+        transition: transform 0.3s ease;
+    }
+    
+    .sidebar.active {
+        transform: translateX(0);
+    }
+
+    .content {
+        margin-left: 0;
+        width: 100%;
+    }
+}

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DSABot Documentation</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/themes/prism-okaidia.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="sidebar-header">
+            <h2>Contents</h2>
+        </div>
+        <ul class="nav-links">
+            <li><a href="#getting-started" class="nav-link">Getting Started</a></li>
+            <li><a href="#running-locally" class="nav-link">Running Locally</a></li>
+            <li><a href="#setup" class="nav-link">Setup</a></li>
+            <li>
+                <a href="#commands" class="nav-link">Commands</a>
+                <ul class="sub-links">
+                    <li><a href="#cmd-resources" class="nav-link sub-link">Resources</a></li>
+                    <li><a href="#cmd-practice" class="nav-link sub-link">Practice</a></li>
+                    <li><a href="#cmd-timer" class="nav-link sub-link">Timer</a></li>
+                    <li><a href="#cmd-leaderboard" class="nav-link sub-link">Leaderboard</a></li>
+                </ul>
+            </li>
+            <li><a href="#apis" class="nav-link">APIs</a></li>
+            <li><a href="#faq" class="nav-link">FAQ</a></li>
+        </ul>
+    </nav>
+
+    <main class="content">
+        <header>
+            <h1>DSABot Documentation</h1>
+        </header>
+
+        <section id="getting-started">
+            <h2>Getting Started</h2>
+            <p>Welcome to DSABot! This bot is designed to help Discord communities learn and practice Data Structures and Algorithms together.</p>
+            <p>DSABot provides various features including practice problems, resource sharing, and community engagement tools to make learning DSA more interactive and fun.</p>
+        </section>
+
+        <section id="running-locally">
+            <h2>Running Locally</h2>
+            <p>To run DSABot locally, you'll need Python 3.8+ and pip installed on your system. Follow the setup instructions below to get started with your own instance of the bot.</p>
+            <p>Make sure you have a Discord Developer account and have created a bot application in the Discord Developer Portal before proceeding.</p>
+        </section>
+
+        <section id="setup">
+            <h2>Setup</h2>
+            <p>Follow these steps to set up the bot:</p>
+            <pre><code class="language-python">
+# Clone the repository
+git clone https://github.com/yourusername/DSABot
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Configure environment variables
+import os
+os.environ['DISCORD_TOKEN'] = 'your-token-here'
+os.environ['PREFIX'] = '!'  # Optional command prefix
+            </code></pre>
+        </section>
+
+        <section id="commands">
+            <h2>Commands</h2>
+            
+            <section id="cmd-resources">
+                <h3>Resources Command</h3>
+                <p>The resources command provides curated learning materials and references.</p>
+                <pre><code class="language-python">
+async def handle_resources(interaction):
+    resources = await get_resources_by_topic()
+    embed = discord.Embed(
+        title="DSA Learning Resources",
+        color=discord.Color.blue()
+    )
+    await interaction.response.send_message(embed=embed)
+                </code></pre>
+            </section>
+
+            <section id="cmd-practice">
+                <h3>Practice Command</h3>
+                <p>Generates practice problems based on difficulty level and topic.</p>
+                <pre><code class="language-python">
+async def handle_practice(interaction, difficulty: str, topic: str = None):
+    problem = await generate_problem(difficulty, topic)
+    embed = create_problem_embed(problem)
+    await interaction.response.send_message(embed=embed)
+                </code></pre>
+            </section>
+
+            <section id="cmd-timer">
+                <h3>Timer Command</h3>
+                <p>Sets up a countdown timer for practice sessions.</p>
+                <pre><code class="language-python">
+async def handle_timer(interaction, minutes: int):
+    timer = PracticeTimer(minutes)
+    await interaction.response.send_message(
+        f"Timer started for {minutes} minutes!"
+    )
+    await timer.start()
+                </code></pre>
+            </section>
+
+            <section id="cmd-leaderboard">
+                <h3>Leaderboard Command</h3>
+                <p>Displays server-wide rankings based on problem-solving activity.</p>
+                <pre><code class="language-python">
+async def handle_leaderboard(interaction):
+    rankings = await get_server_rankings(interaction.guild_id)
+    embed = create_leaderboard_embed(rankings)
+    await interaction.response.send_message(embed=embed)
+                </code></pre>
+            </section>
+        </section>
+
+        <section id="apis">
+            <h2>APIs</h2>
+            <p>DSABot integrates with various APIs to provide a comprehensive learning experience. The bot uses LeetCode's API for problem fetching and verification, and maintains its own API for user progress tracking.</p>
+        </section>
+
+        <section id="faq">
+            <h2>FAQ</h2>
+            <p>Common questions and troubleshooting tips for DSABot:</p>
+            <p>1. How do I add the bot to my server?</p>
+            <p>2. Can I customize the difficulty levels?</p>
+            <p>3. How does the scoring system work?</p>
+        </section>
+    </main>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/components/prism-python.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

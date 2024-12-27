@@ -4,3 +4,4 @@ audioop-lts
 requests
 bs4
 autokattis
+asyncpg

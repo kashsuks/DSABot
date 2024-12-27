@@ -1,6 +1,7 @@
 import os
 import random
 import requests
+import asyncpg
 from dotenv import load_dotenv
 from discord import Intents, Client, Interaction
 from discord.ext import commands
@@ -8,6 +9,7 @@ from autokattis import OpenKattis
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
+DATABASE_URL = os.getenv('DATABASE_URL')
 
 intents = Intents.default()
 intents.message_content = True
@@ -48,26 +50,38 @@ ALGORITHMS = [
     "Graph Theory"
 ]
 
-userRatings = {}
+async def init_db():
+    conn = await asyncpg.connect(DATABASE_URL)
+    await conn.execute("""
+        CREATE TABLE IF NOT EXISTS user_handles (
+            id SERIAL PRIMARY KEY,
+            discord_id BIGINT UNIQUE NOT NULL,
+            codeforces_handle TEXT UNIQUE NOT NULL,
+            rating INT NOT NULL
+        )
+    """)
+    await conn.close()
 
 @bot.event
 async def on_ready():
     print(f'Logged in as {bot.user}')
     await bot.tree.sync()
+    await init_db()
+    print("Database initialized.")
 
 @bot.tree.command(name="repo", description="Send the link to my GitHub repository")
 async def repo(interaction: Interaction):
     await interaction.response.send_message(f"Here is the link to my GitHub repo: {GITHUB_REPO_URL}")
-    
+
 @bot.tree.command(name="random-algo", description="Get a random algorithm to learn")
 async def random_algo(interaction: Interaction):
     algorithm = random.choice(ALGORITHMS)
     await interaction.response.send_message(f"Learn about this algorithm: {algorithm}")
-    
+
 @bot.tree.command(name="resources", description="Resources used to learn competitive programming")
 async def resources(interaction: Interaction):
     await interaction.response.send_message(f"Here are some competitive programming resources:\n https://cp-algorithms.com/index.html \n https://xlinux.nist.gov/dads/")
-    
+
 @bot.tree.command(name="random-problem", description="Gives a random problem from Kattis")
 async def random_problem(interaction: Interaction):
     await interaction.response.defer()
@@ -99,8 +113,21 @@ async def set_handle(interaction: Interaction, username: str):
         if data['status'] == 'OK' and data['result']:
             latestRating = data['result'][-1]
             newRating = latestRating['newRating']
-            userRatings[username] = newRating
-            await interaction.response.send_message(f"Your Codeforces rating has been set. Current rating for {username}: {newRating}")
+            discord_id = interaction.user.id
+
+            try:
+                conn = await asyncpg.connect(DATABASE_URL)
+                await conn.execute("""
+                    INSERT INTO user_handles (discord_id, codeforces_handle, rating)
+                    VALUES ($1, $2, $3)
+                    ON CONFLICT (discord_id) DO UPDATE
+                    SET codeforces_handle = $2, rating = $3
+                """, discord_id, username, newRating)
+                await conn.close()
+
+                await interaction.response.send_message(f"Your Codeforces rating has been saved. Current rating for {username}: {newRating}")
+            except Exception as e:
+                await interaction.response.send_message(f"An error occurred while saving your data: {e}")
         else:
             await interaction.response.send_message(f"No rating data found for {username}. Please check your handle and try again.")
     else:

@@ -97,7 +97,7 @@ async def set_handle(interaction: Interaction, username: str):
         data = response.json()
 
         if data['status'] == 'OK' and data['result']:
-            latestRating = data['result'][0]
+            latestRating = data['result'][-1]
             newRating = latestRating['newRating']
             userRatings[username] = newRating
             await interaction.response.send_message(f"Your Codeforces rating has been set. Current rating for {username}: {newRating}")

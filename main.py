@@ -60,5 +60,9 @@ async def repo(interaction: Interaction):
 async def random_algo(interaction: Interaction):
     algorithm = random.choice(ALGORITHMS)
     await interaction.response.send_message(f"Learn about this algorithm: {algorithm}")
+    
+@bot.tree.command(name="resources", description="Resources used to learn competitve programming")
+async def resources(interaction: Interaction):
+    await interaction.response.send_message(f"Here are some competitive programming resources:\n https://cp-algorithms.com/index.html \n https://xlinux.nist.gov/dads/")
 
 bot.run(TOKEN)

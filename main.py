@@ -7,6 +7,7 @@ from discord import Intents, Client, Interaction, Embed, Colour
 from discord.ext import commands, tasks
 from autokattis import OpenKattis
 from datetime import datetime, timedelta, time
+
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
 DATABASE_URL = os.getenv('DATABASE_URL')
@@ -67,7 +68,7 @@ async def on_ready():
     print(f'Logged in as {bot.user}')
     await bot.tree.sync()
     await init_db()
-    print("Database initialized and rating update task queued.")
+    print("Database initialized.")
     
 @bot.tree.command(name="repo", description="Send the link to my GitHub repository")
 async def repo(interaction: Interaction):
@@ -177,5 +178,63 @@ async def leaderboard(interaction: Interaction):
         await interaction.response.send_message(embed=leaderboardEmbed)
     except Exception as e:
         await interaction.response.send_message(f"An error occurred while fetching the leaderboard: {e}")
+        
+        
+#Role specific commands
+
+@bot.tree.command(name="update-rating", description="Update all Codeforces rating and list all changes.")
+async def update_rating(interaction: Interaction):
+    if "Kashyap" not in [role.name for role in interaction.user.roles]:
+        await interaction.response.send_message("You do not have permissions to send this command.")
+        return
+    
+    await interaction.response.defer()
+    try:
+        conn = await asyncpg.connect(DATABASE_URL)
+        rows = await conn.fetch("SELECT id, codeforces_handle, rating FROM user_handles")
+        
+        ratingChanges = []
+        for row in rows:
+            handle = row['codeforces_handle']
+            oldRating = row['rating']
+            
+            url = f"https://codeforces.com/api/user.rating?handle={handle}"
+            response = requests.get(url)
+            
+            if response.status_code == 200:
+                data = response.json()
+                if data['status'] == 'OK' and data['result']:
+                    latestRating = data['result'][-1]['newRating']
+                    
+                    if latestRating != oldRating:
+                        ratingChange = latestRating - oldRating
+                        ratingChanges.append(f"**{handle}:** {oldRating} --> {ratingChange:+} --> {latestRating}")
+                        
+                        await conn.execute("""
+                            UPDATE user_handles
+                            SET rating = $1
+                            WHERE id = $2
+                        """, latestRating, row['id'])
+            
+            else:
+                print(f"Failed to fetch rating for {handle}")
+        
+        await conn.close()
+        
+        embed = Embed(
+            title="Codeforces Rating Updates",
+            color=Colour.blue()
+        )
+
+        if ratingChanges:
+            embed.description = "\n".join(ratingChanges)
+        else:
+            embed.description = "**No rating changes**"
+
+        await interaction.followup.send(embed=embed)
+        
+    except Exception as e:
+        await interaction.followup.send("An error occurred while updating the ratings.")
+        print(e)
 
 bot.run(TOKEN)

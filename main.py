@@ -3,7 +3,7 @@ import random
 import requests
 import asyncpg
 from dotenv import load_dotenv
-from discord import Intents, Client, Interaction
+from discord import Intents, Client, Interaction, Embed, Colour
 from discord.ext import commands
 from autokattis import OpenKattis
 
@@ -132,5 +132,50 @@ async def set_handle(interaction: Interaction, username: str):
             await interaction.response.send_message(f"No rating data found for {username}. Please check your handle and try again.")
     else:
         await interaction.response.send_message(f"Error fetching data for {username}. Please try again later.")
+        
+@bot.tree.command(name="leaderboard", description="Show the top 10 Codeforces users in the server")
+async def leaderboard(interaction: Interaction):
+    try:
+        conn = await asyncpg.connect(DATABASE_URL)
+        rows = await conn.fetch("""
+            SELECT discord_id, codeforces_handle, rating 
+            FROM user_handles 
+            ORDER BY rating DESC
+        """)
+        await conn.close()
+        
+        leaderboardEmbed = Embed(
+            title="Codeforces Leaderboard",
+            color=Colour.blue()
+        )
+        description = ""
+
+        for i, row in enumerate(rows[:10], start=1):
+            description += f"**#{i}** {row['codeforces_handle']} --> {row['rating']}\n"
+
+        leaderboardEmbed.description = description
+
+        userRank = None
+        for i, row in enumerate(rows, start=1):
+            if row['discord_id'] == interaction.user.id:
+                userRank = i
+                break
+
+        if userRank:
+            leaderboardEmbed.add_field(
+                name="Your Rank",
+                value=f"**#{userRank}** {interaction.user.mention}",
+                inline=False
+            )
+        else:
+            leaderboardEmbed.add_field(
+                name="Your Rank",
+                value="You are not on the leaderboard.",
+                inline=False
+            )
+
+        await interaction.response.send_message(embed=leaderboardEmbed)
+    except Exception as e:
+        await interaction.response.send_message(f"An error occurred while fetching the leaderboard: {e}")
 
 bot.run(TOKEN)

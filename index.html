@@ -119,7 +119,50 @@ async def random_algo(interaction: Interaction):
                 <h3>Leaderboard Command (Coming Soon)</h3>
                 <p>Displays server-wide rankings based on codeforces rating.</p>
                 <pre><code class="language-python">
-#Not done yet
+@bot.tree.command(name="leaderboard", description="Show the top 10 Codeforces users in the server")
+async def leaderboard(interaction: Interaction):
+    try:
+        conn = await asyncpg.connect(DATABASE_URL)
+        rows = await conn.fetch("""
+            SELECT discord_id, codeforces_handle, rating 
+            FROM user_handles 
+            ORDER BY rating DESC
+        """)
+        await conn.close()
+        
+        leaderboardEmbed = Embed(
+            title="Codeforces Leaderboard",
+            color=Colour.blue()
+        )
+        description = ""
+
+        for i, row in enumerate(rows[:10], start=1):
+            description += f"**#{i}** {row['codeforces_handle']} --> {row['rating']}\n"
+
+        leaderboardEmbed.description = description
+
+        userRank = None
+        for i, row in enumerate(rows, start=1):
+            if row['discord_id'] == interaction.user.id:
+                userRank = i
+                break
+
+        if userRank:
+            leaderboardEmbed.add_field(
+                name="Your Rank",
+                value=f"**#{userRank}** {interaction.user.mention}",
+                inline=False
+            )
+        else:
+            leaderboardEmbed.add_field(
+                name="Your Rank",
+                value="You are not on the leaderboard.",
+                inline=False
+            )
+
+        await interaction.response.send_message(embed=leaderboardEmbed)
+    except Exception as e:
+        await interaction.response.send_message(f"An error occurred while fetching the leaderboard: {e}")
                 </code></pre>
             </section>
 

@@ -3,196 +3,226 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DSABot Documentation</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/themes/prism-okaidia.min.css">
+    <title>DSABot</title>
     <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root{
+            --red: #da0037;
+            --white: #ffffff;
+        }
+
+        body{
+            display: grid;
+            margin: 0;
+            height: 100vh;
+            place-items: center;
+            background: #000;
+        }
+
+        shader-art{
+            display: block;
+            width: 100vw;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: -1;
+        }
+
+        shader-art canvas{
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        .navbar{
+            background-color: rgb(218, 0, 55);
+            padding: 1.5rem 2rem;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-brand{
+            font-family: 'Morlen', serif;
+            font-size: 1.8rem;
+            color: var(--white);
+            text-decoration: none;
+        }
+
+        .nav-links{
+            display: flex;
+            gap: 2rem;
+        }
+
+        .nav-link {
+            font-size: 1rem;
+            color: var(--white);
+            text-decoration: none;
+        }
+
+        .hero {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            text-align: center;
+            z-index: 1;
+            position: relative;
+            margin-top: 5rem; /* Adjust to ensure it doesn’t overlap with the navbar */
+        }
+
+        .hero-content {
+            max-width: 600px;
+            color: white;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .button {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .button-primary {
+            background-color: var(--red);
+            color: var(--white);
+        }
+
+        .button-secondary {
+            background-color: transparent;
+            color: var(--white);
+            border: 2px solid var(--red);
+        }
+
+        .button-primary:hover {
+            background-color: #ff0042;
+            transform: translateY(-2px);
+        }
+
+        .button-secondary:hover {
+            background-color: rgba(218, 0, 55, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .caption {
+            font-size: 1.4rem;
+            margin-top: 1rem;
+            color: var(--white);
+            opacity: 0.9;
+        }
+    </style>
 </head>
 <body>
-    <nav class="sidebar">
-        <div class="sidebar-header">
-            <h2>Contents</h2>
+    <shader-art autoplay dpr="1" role="img" tabindex="0" aria-label="A noise animation in red">
+        <script type="buffer" name="position" data-size="2">
+            [-1, 1, -1,-1, 1,1, 1, 1, -1,-1, 1,-1]
+        </script>
+        <script type="buffer" name="uv" data-size="2">
+            [ 0, 0,  0, 1, 1,0, 1, 0,  0, 1, 1, 1]
+        </script>
+        <script type="vert">
+            #version 300 es
+            
+            precision highp float;
+            in vec4 position;
+            in vec2 uv;
+            out vec2 vUv;
+            out vec4 vPosition;
+            void main() {
+              vUv = uv;
+              vPosition = position;
+              gl_Position = position;
+            }
+        </script>
+        <script type="frag">
+            #version 300 es
+            
+            precision highp float;
+            in vec2 vUv;
+            in vec4 vPosition;
+            out vec4 fragColor;
+            uniform vec2 resolution;
+            uniform float time;
+            uniform sampler2D charset;
+            uniform sampler2D message;
+            
+            #define AA 1e-3
+            #define PI 3.141592654
+            #define DEG PI / 180.
+
+            vec2 rotate(vec2 p, float a) {
+              return vec2(p.x * cos(a) - p.y * sin(a),
+                      p.x * sin(a) + p.y * cos(a));
+            }
+              
+            float nooise(vec2 p) {
+              float n = .5 + .5 * (
+                sin(p.x * .5 + cos(p.y * 4. + .2 * cos(p.x * 2. + time * .5) + time * .3) + time * .4) * 
+                cos(p.y * .7 + sin(p.x * 3. + .3 * cos(p.y * 2. + time * .6) + time * .4) + time * .7)
+              );
+              return n;
+            }
+            
+            
+            vec3 background() {
+              vec2 p0 = vPosition.xy;
+              float aspectRatio = resolution.x / resolution.y;
+              p0.x *= aspectRatio;
+              vec2 p = rotate(p0.xy * .8, time * .05);
+              
+              float n = (nooise(p) + nooise(p * 2.) + nooise(p * 5.)) / 3.;
+              
+              n = n * sin(n * n * 23. + time * .2);
+              n = clamp(smoothstep(.3, .35, n) - smoothstep(.4, .45, n), 0., 1.);
+              return vec3(.7, .1, .05) * n;
+            }
+            
+            void main() {
+              float scanlines = .8 + .2 * smoothstep(0., 4., mod(gl_FragCoord.y, 4.));
+              fragColor = vec4(background(),1.);
+            }
+        </script>
+    </shader-art>
+
+    <nav class="navbar">
+        <a href="index.html" class="nav-brand">DSABot</a>
+        <div class="nav-links">
+            <a href="index.html" class="nav-link">Home</a>
+            <a href="docs.html" class="nav-link">Docs</a>
         </div>
-        <ul class="nav-links">
-            <li><a href="#getting-started" class="nav-link">Getting Started</a></li>
-            <li><a href="#running-locally" class="nav-link">Running Locally</a></li>
-            <li><a href="#setup" class="nav-link">Setup</a></li>
-            <li>
-                <a href="#commands" class="nav-link">Commands</a>
-                <ul class="sub-links">
-                    <li><a href="#cmd-resources" class="nav-link sub-link">Resources</a></li>
-                    <li><a href="#cmd-problem" class="nav-link sub-link">Random Problem</a></li>
-                    <li><a href="#cmd-algorithm" class="nav-link sub-link">Random Algorithm</a></li>
-                    <li><a href="#cmd-leaderboard" class="nav-link sub-link">Leaderboard</a></li>
-                    <li><a href="#cmd-repo" class="nav-link sub-link">Repository</a></li>
-                </ul>
-            </li>
-            <li><a href="#apis" class="nav-link">APIs</a></li>
-            <li><a href="#faq" class="nav-link">FAQ</a></li>
-        </ul>
     </nav>
 
-    <main class="content">
-        <header>
-            <h1>DSABot Documentation</h1>
-        </header>
+    <div class="hero">
+        <div class="hero-content">
+            <h1>DSABot</h1>
+            <p class="caption">Level up your Discord server with interactive DSA learning</p>
+            <div class="buttons">
+                <a href="https://discord.com/oauth2/authorize?client_id=1322001908189237258&permissions=18152679491584&integration_type=0&scope=applications.commands+bot" class="button button-primary">Add to Server</a>
+                <a href="https://github.com/kashsuks/DSABot" class="button button-secondary">Check Out The Repository</a>
+            </div>
+        </div>
+    </div>
 
-        <section id="getting-started">
-            <h2>Getting Started</h2>
-            <p>Welcome to DSABot! This bot is designed to help Discord communities learn and practice Data Structures and Algorithms together.</p>
-            <p>DSABot provides various features including practice problems, resource sharing, and community engagement tools to make learning DSA more interactive and fun.</p>
-        </section>
-
-        <section id="running-locally">
-            <h2>Running Locally</h2>
-            <p>To run DSABot locally, you'll need Python 3.8+ and pip installed on your system. Follow the setup instructions below to get started with your own copy of the bot.</p>
-            <p>Make sure you have a Discord Developer account and have created a bot application in the Discord Developer Portal before proceeding.</p>
-        </section>
-
-        <section id="setup">
-            <h2>Setup</h2>
-            <p>Follow these steps to set up the bot:</p>
-            <pre><code class="language-python">
-# Clone the repository
-git clone https://github.com/kashsuks/DSABot
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Configure environment variables in the `.env` file
-DISCORD_TOKEN = 'your discord token'
-KATTIS_USERNAME = 'your kattis username'
-KATTIS_PASSWORD = 'your kattis passowrd'
-            </code></pre>
-        </section>
-
-        <section id="commands">
-            <h2>Commands</h2>
-            
-            <section id="cmd-resources">
-                <h3>Resources Command</h3>
-                <p>This command gives me the resources that I use to practice DSA</p>
-                <pre><code class="language-python">
-@bot.tree.command(name="resources", description="Resources used to learn competitve programming")
-async def resources(interaction: Interaction):
-    await interaction.response.send_message(f"Here are some competitive programming resources:\n https://cp-algorithms.com/index.html \n https://xlinux.nist.gov/dads/")
-                </code></pre>
-            </section>
-
-            <section id="cmd-problem">
-                <h3>Practice Command</h3>
-                <p>Generates practice problems based on difficulty level and topic.</p>
-                <pre><code class="language-python">
-@bot.tree.command(name="random-problem", description="Gives a random problem from Kattis")
-async def random_problem(interaction: Interaction):
-    await interaction.response.defer()
-    try:
-        kt = OpenKattis(os.getenv('KATTIS_USERNAME'), os.getenv('KATTIS_PASSWORD'))
-        problems = kt.suggest()
-        if not problems:
-            await interaction.followup.send("No problems found. Please try again later.")
-            return
-
-        problem = random.choice(problems)
-        name = problem.get('name', 'Unknown')
-        difficulty = problem.get('difficulty', 'Unknown')
-        link = problem.get('link', 'No link available')
-
-        await interaction.followup.send(f"Here is a Kattis problem for you to try:\n**Name:** {name}\n**Difficulty:** {difficulty}\n**Link:** {link}")
-    except Exception as e:
-        await interaction.followup.send("An error occurred while fetching a problem from Kattis.")
-        print(e)
-                </code></pre>
-            </section>
-
-            <section id="cmd-algorithm">
-                <h3>Random Algorithm</h3>
-                <p>Gives a random algorithm for you to learn.</p>
-                <pre><code class="language-python">
-@bot.tree.command(name="random-algo", description="Get a random algorithm to learn")
-async def random_algo(interaction: Interaction):
-    algorithm = random.choice(ALGORITHMS)
-    await interaction.response.send_message(f"Learn about this algorithm: {algorithm}")
-                </code></pre>
-            </section>
-
-            <section id="cmd-leaderboard">
-                <h3>Leaderboard Command (Coming Soon)</h3>
-                <p>Displays server-wide rankings based on codeforces rating.</p>
-                <pre><code class="language-python">
-@bot.tree.command(name="leaderboard", description="Show the top 10 Codeforces users in the server")
-async def leaderboard(interaction: Interaction):
-    try:
-        conn = await asyncpg.connect(DATABASE_URL)
-        rows = await conn.fetch("""
-            SELECT discord_id, codeforces_handle, rating 
-            FROM user_handles 
-            ORDER BY rating DESC
-        """)
-        await conn.close()
-        
-        leaderboardEmbed = Embed(
-            title="Codeforces Leaderboard",
-            color=Colour.blue()
-        )
-        description = ""
-
-        for i, row in enumerate(rows[:10], start=1):
-            description += f"**#{i}** {row['codeforces_handle']} --> {row['rating']}\n"
-
-        leaderboardEmbed.description = description
-
-        userRank = None
-        for i, row in enumerate(rows, start=1):
-            if row['discord_id'] == interaction.user.id:
-                userRank = i
-                break
-
-        if userRank:
-            leaderboardEmbed.add_field(
-                name="Your Rank",
-                value=f"**#{userRank}** {interaction.user.mention}",
-                inline=False
-            )
-        else:
-            leaderboardEmbed.add_field(
-                name="Your Rank",
-                value="You are not on the leaderboard.",
-                inline=False
-            )
-
-        await interaction.response.send_message(embed=leaderboardEmbed)
-    except Exception as e:
-        await interaction.response.send_message(f"An error occurred while fetching the leaderboard: {e}")
-                </code></pre>
-            </section>
-
-            <section id="cmd-repo">
-                <h3>Github Repository Link</h3>
-                <p>Displays the Github repository link of the Discord Bot.</p>
-                <pre><code class="language-python">
-@bot.tree.command(name="repo", description="Send the link to my GitHub repository")
-async def repo(interaction: Interaction):
-    await interaction.response.send_message(f"Here is the link to my GitHub repo: {GITHUB_REPO_URL}")
-                </code></pre>
-            </section>
-        </section>
-
-        <section id="apis">
-            <h2>APIs</h2>
-            <p>DSABot integrates with various APIs to provide a comprehensive learning experience. The bot uses LeetCode's API for problem fetching and verification, and maintains its own API for user progress tracking.</p>
-        </section>
-
-        <section id="faq">
-            <h2>FAQ</h2>
-            <p>Common questions and troubleshooting tips for DSABot:</p>
-            <p>1. How do I add the bot to my server?</p>
-            <p>2. Can I customize the difficulty levels?</p>
-            <p>3. How does the scoring system work?</p>
-        </section>
-    </main>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/components/prism-core.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/components/prism-python.min.js"></script>
-    <script src="script.js"></script>
+    <script type="module">
+        import { ShaderArt } from 'https://cdn.skypack.dev/shader-art';
+        ShaderArt.register();
+    </script>
 </body>
 </html>

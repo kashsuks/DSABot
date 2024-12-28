@@ -67,42 +67,8 @@ async def on_ready():
     print(f'Logged in as {bot.user}')
     await bot.tree.sync()
     await init_db()
-    update_ratings.start()
     print("Database initialized and rating update task queued.")
     
-@tasks.loop(time=datetime.strptime("00:00:00", "%H:%M:%S").time())
-async def update_ratings():
-    print("Running daily rating update...")
-    try:
-        conn = await asyncpg.connect(DATABASE_URL)
-        rows = await conn.fetch("SELECT id, codeforces_handle, rating FROM user_handles")
-        
-        for row in rows:
-            handle = row['codeforces_handle']
-            url = f"https://codeforces.com/api/user.rating?handle={handle}"
-            response = requests.get(url)
-            
-            if response.status_code == 200:
-                data = response.json()
-                
-                if data['status'] == 'OK' and data['result']:
-                    latest_rating = data['result'][-1]['newRating']
-
-                    if latest_rating != row['rating']:
-                        await conn.execute("""
-                            UPDATE user_handles
-                            SET rating = $1
-                            WHERE id = $2
-                        """, latest_rating, row['id'])
-                        print(f"Updated rating for {handle}: {row['rating']} -> {latest_rating}")
-            else:
-                print(f"Failed to fetch rating for {handle}")
-
-        await conn.close()
-        print("Rating update completed.")
-    except Exception as e:
-        print(f"An error occurred during the rating update: {e}")
-
 @bot.tree.command(name="repo", description="Send the link to my GitHub repository")
 async def repo(interaction: Interaction):
     await interaction.response.send_message(f"Here is the link to my GitHub repo: {GITHUB_REPO_URL}")

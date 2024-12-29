@@ -147,7 +147,7 @@ async def leaderboard(interaction: Interaction):
         
         leaderboardEmbed = Embed(
             title="Codeforces Leaderboard",
-            color=Colour.blue()
+            color=Colour.red()
         )
         description = ""
 
@@ -223,7 +223,7 @@ async def update_rating(interaction: Interaction):
         
         embed = Embed(
             title="Codeforces Rating Updates",
-            color=Colour.blue()
+            color=Colour.red()
         )
 
         if ratingChanges:

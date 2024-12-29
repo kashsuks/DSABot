@@ -184,7 +184,7 @@ async def leaderboard(interaction: Interaction):
 
 @bot.tree.command(name="update-rating", description="Update all Codeforces rating and list all changes.")
 async def update_rating(interaction: Interaction):
-    if "Kashyap" not in [role.name for role in interaction.user.roles]:
+    if "Kashyap" not in [role.name for role in interaction.user.roles]: # Replace `Kashyap` with whatever role your admin has, whether that be `Admin` or something else.
         await interaction.response.send_message("You do not have permissions to send this command.")
         return
     

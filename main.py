@@ -2,6 +2,7 @@ import os
 import random
 import requests
 import asyncpg
+import csv
 from dotenv import load_dotenv
 from discord import Intents, Client, Interaction, Embed, Colour
 from discord.ext import commands, tasks
@@ -235,6 +236,40 @@ async def update_rating(interaction: Interaction):
         
     except Exception as e:
         await interaction.followup.send("An error occurred while updating the ratings.")
+        print(e)
+
+@bot.tree.command(name="save-database", description="Save the entire database data to a CSV for easy instance-hopping")
+async def save_database(interaction: Interaction):
+    if "Kashyap" not in [role.name for role in interaction.user.roles]:
+        await interaction.response.send_message("You do not have permissions to run this command.")
+        return
+
+    await interaction.response.defer()
+    
+    try:
+        directory = "local_saves"
+        os.makedirs(directory, exist_ok=True)
+        
+        conn = await asyncpg.connect(DATABASE_URL)
+        rows = await conn.fetch("SELECT * FROM user_handles")
+        await conn.close()
+        
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filePath = os.path.join(directory, f"user_handles_{timestamp}.csv")
+        
+        with open(filePath, mode='w', newline='', encoding='utf-8') as file:
+            writer = csv.writer(file)
+            
+            if rows:
+                writer.writerow(rows[0].keys())
+                
+            for row in rows:
+                writer.writerow(row.values())
+        
+        await interaction.followup.send(f"Database data has been saved to `{filePath}`.")
+        
+    except Exception as e:
+        await interaction.followup.send("An error occured while copying data.")
         print(e)
 
 bot.run(TOKEN)

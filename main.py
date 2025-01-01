@@ -179,8 +179,7 @@ async def leaderboard(interaction: Interaction):
         await interaction.response.send_message(embed=leaderboardEmbed)
     except Exception as e:
         await interaction.response.send_message(f"An error occurred while fetching the leaderboard: {e}")
-        
-        
+            
 #Role specific commands
 
 @bot.tree.command(name="update-rating", description="Update all Codeforces rating and list all changes.")

@@ -136,3 +136,14 @@ pre {
         width: 100%;
     }
 }
+
+a {
+    color: #F28E8E; /* Light red color */
+    text-decoration: none;
+    transition: color 0.3s, text-shadow 0.3s; /* Smooth transition effect */
+}
+
+a:hover {
+    color: #FFB6B6; /* Lighter red on hover */
+    text-shadow: 0 0 5px rgba(255, 182, 182, 0.8); /* Faint glow effect */
+}

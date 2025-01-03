@@ -72,6 +72,7 @@ pip install -r requirements.txt
 DISCORD_TOKEN = 'your discord token'
 KATTIS_USERNAME = 'your kattis username'
 KATTIS_PASSWORD = 'your kattis passowrd'
+DATABASE_URL = 'your postgresql database url'
             </code></pre>
         </section>
 
@@ -80,37 +81,25 @@ KATTIS_PASSWORD = 'your kattis passowrd'
             
             <section id="cmd-resources">
                 <h3>Resources Command</h3>
-                <p>This command gives me the resources that I use to practice DSA</p>
+                <p>This command gives the user the resources that I use to practice Data Structures and Algorithms</p>
                 <pre><code class="language-python">
-@bot.tree.command(name="resources", description="Resources used to learn competitve programming")
-async def resources(interaction: Interaction):
-    await interaction.response.send_message(f"Here are some competitive programming resources:\n https://cp-algorithms.com/index.html \n https://xlinux.nist.gov/dads/")
+/resources
                 </code></pre>
+                <p>The current output for `/resources` command are the following links:</p>
+                <ol>
+                    <li><a href="https://cp-algorithms.com/index.html" target="_blank">https://cp-algorithms.com/index.html</a></li>
+                    <li><a href="https://xlinux.nist.gov/dads/" target="_blank">https://xlinux.nist.gov/dads/</a></li>
+                    <li><a href="https://leetcode.com/" target="_blank">https://leetcode.com/</a></li>
+                    <li><a href="https://codeforces.com/" target="_blank">https://codeforces.com/</a></li>
+                    <li><a href="https://open.kattis.com/" target="_blank">https://open.kattis.com/</a></li>
+                </ol>
             </section>
 
             <section id="cmd-problem">
                 <h3>Practice Command</h3>
                 <p>Generates practice problems based on difficulty level and topic.</p>
                 <pre><code class="language-python">
-@bot.tree.command(name="random-problem", description="Gives a random problem from Kattis")
-async def random_problem(interaction: Interaction):
-    await interaction.response.defer()
-    try:
-        kt = OpenKattis(os.getenv('KATTIS_USERNAME'), os.getenv('KATTIS_PASSWORD'))
-        problems = kt.suggest()
-        if not problems:
-            await interaction.followup.send("No problems found. Please try again later.")
-            return
-
-        problem = random.choice(problems)
-        name = problem.get('name', 'Unknown')
-        difficulty = problem.get('difficulty', 'Unknown')
-        link = problem.get('link', 'No link available')
-
-        await interaction.followup.send(f"Here is a Kattis problem for you to try:\n**Name:** {name}\n**Difficulty:** {difficulty}\n**Link:** {link}")
-    except Exception as e:
-        await interaction.followup.send("An error occurred while fetching a problem from Kattis.")
-        print(e)
+/random-problem
                 </code></pre>
             </section>
 
@@ -118,10 +107,7 @@ async def random_problem(interaction: Interaction):
                 <h3>Random Algorithm</h3>
                 <p>Gives a random algorithm for you to learn.</p>
                 <pre><code class="language-python">
-@bot.tree.command(name="random-algo", description="Get a random algorithm to learn")
-async def random_algo(interaction: Interaction):
-    algorithm = random.choice(ALGORITHMS)
-    await interaction.response.send_message(f"Learn about this algorithm: {algorithm}")
+/random-algorithm
                 </code></pre>
             </section>
 
@@ -129,50 +115,7 @@ async def random_algo(interaction: Interaction):
                 <h3>Leaderboard Command</h3>
                 <p>Displays server-wide rankings based on codeforces rating.</p>
                 <pre><code class="language-python">
-@bot.tree.command(name="leaderboard", description="Show the top 10 Codeforces users in the server")
-async def leaderboard(interaction: Interaction):
-    try:
-        conn = await asyncpg.connect(DATABASE_URL)
-        rows = await conn.fetch("""
-            SELECT discord_id, codeforces_handle, rating 
-            FROM user_handles 
-            ORDER BY rating DESC
-        """)
-        await conn.close()
-        
-        leaderboardEmbed = Embed(
-            title="Codeforces Leaderboard",
-            color=Colour.blue()
-        )
-        description = ""
-
-        for i, row in enumerate(rows[:10], start=1):
-            description += f"**#{i}** {row['codeforces_handle']} --> {row['rating']}\n"
-
-        leaderboardEmbed.description = description
-
-        userRank = None
-        for i, row in enumerate(rows, start=1):
-            if row['discord_id'] == interaction.user.id:
-                userRank = i
-                break
-
-        if userRank:
-            leaderboardEmbed.add_field(
-                name="Your Rank",
-                value=f"**#{userRank}** {interaction.user.mention}",
-                inline=False
-            )
-        else:
-            leaderboardEmbed.add_field(
-                name="Your Rank",
-                value="You are not on the leaderboard.",
-                inline=False
-            )
-
-        await interaction.response.send_message(embed=leaderboardEmbed)
-    except Exception as e:
-        await interaction.response.send_message(f"An error occurred while fetching the leaderboard: {e}")
+/leaderboard
                 </code></pre>
             </section>
 
@@ -180,8 +123,11 @@ async def leaderboard(interaction: Interaction):
                 <h3>Github Repository Link</h3>
                 <p>Displays the Github repository link of the Discord Bot.</p>
                 <pre><code class="language-python">
-
+/repo
                 </code></pre>
+                <p>You can access the repository here: 
+                    <a href="https://github.com/kashsuks/DSABot" target="_blank">DSABot Repository</a>
+                </p>
             </section>
         </section>
 

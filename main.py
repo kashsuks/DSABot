@@ -82,7 +82,7 @@ async def random_algo(interaction: Interaction):
 
 @bot.tree.command(name="resources", description="Resources used to learn competitive programming")
 async def resources(interaction: Interaction):
-    await interaction.response.send_message(f"Here are some competitive programming resources:\n https://cp-algorithms.com/index.html \n https://xlinux.nist.gov/dads/")
+    await interaction.response.send_message(f"Here are some competitive programming resources:\n https://cp-algorithms.com/index.html \n https://xlinux.nist.gov/dads/ \n https://leetcode.com/ \n https://codeforces.com/ \n https://open.kattis.com/")
 
 @bot.tree.command(name="random-problem", description="Gives a random problem from Kattis")
 async def random_problem(interaction: Interaction):

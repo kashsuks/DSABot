@@ -8,7 +8,6 @@ from discord import Intents, Client, Interaction, Embed, Colour
 from discord.ext import commands, tasks
 from autokattis import OpenKattis
 from datetime import datetime, timedelta, time
-from LeetcodeWrapper import leetcode_Wrapper
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')

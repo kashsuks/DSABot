@@ -1,7 +1,6 @@
 import os
 import csv
 import asyncpg
-import asyncio
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -40,6 +39,5 @@ async def CSVtoDB():
         
     except Exception as e:
         print(f"An error occurred: {e}")
-        
-        
+
 CSVtoDB()

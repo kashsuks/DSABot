@@ -8,6 +8,7 @@ from discord import Intents, Client, Interaction, Embed, Colour
 from discord.ext import commands, tasks
 from autokattis import OpenKattis
 from datetime import datetime, timedelta, time
+from LeetcodeWrapper import leetcode_Wrapper
 
 load_dotenv()
 TOKEN = os.getenv('DISCORD_TOKEN')
@@ -104,8 +105,8 @@ async def random_problem(interaction: Interaction):
         await interaction.followup.send("An error occurred while fetching a problem from Kattis.")
         print(e)
 
-@bot.tree.command(name="set-handle", description="Set your Codeforces handle to get rating information")
-async def set_handle(interaction: Interaction, username: str):
+@bot.tree.command(name="set-handle-cf", description="Set your Codeforces handle to get rating information")
+async def set_handle_cf(interaction: Interaction, username: str):
     url = f"https://codeforces.com/api/user.rating?handle={username}"
     response = requests.get(url)
 
@@ -134,6 +135,11 @@ async def set_handle(interaction: Interaction, username: str):
             await interaction.response.send_message(f"No rating data found for {username}. Please check your handle and try again.")
     else:
         await interaction.response.send_message(f"Error fetching data for {username}. Please try again later.")
+        
+@bot.tree.command(name="set-handle-lc", description="Set your Leetcode handle to get rating information")
+async def set_handle_lc(interaction: Interaction, username: str):
+    
+    url = f"https://alfa-leetcode-api.onrender.com/{username}/contest"
         
 @bot.tree.command(name="leaderboard", description="Show the top 10 Codeforces users in the server")
 async def leaderboard(interaction: Interaction):

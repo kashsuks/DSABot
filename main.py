@@ -136,9 +136,68 @@ async def set_handle_cf(interaction: Interaction, username: str):
         await interaction.response.send_message(f"Error fetching data for {username}. Please try again later.")
         
 @bot.tree.command(name="set-handle-lc", description="Set your Leetcode handle to get rating information")
-async def set_handle_lc(interaction: Interaction, username: str):
-    
-    url = f"https://alfa-leetcode-api.onrender.com/{username}/contest"
+async def setHandleLc(interaction: Interaction, username: str):
+    try:
+        url = f"https://alfa-leetcode-api.onrender.com/{username}/contest"
+        response = requests.get(url)
+
+        if response.status_code != 200:
+            await interaction.response.send_message(
+                f"Error fetching data for {username}. Please check the username and try again."
+            )
+            return
+
+        data = response.json()
+
+        if not data or not data.get("contestParticipation"):
+            await interaction.response.send_message(
+                f"No contest data found for {username}. Please check the username and try again."
+            )
+            return
+
+        lastContest = data["contestParticipation"][-1]
+        contestRating = lastContest["rating"]
+
+        discordId = interaction.user.id
+        conn = await asyncpg.connect(DATABASE_URL)
+
+        existing_user = await conn.fetchrow(
+            "SELECT * FROM user_handles WHERE discord_id = $1", discordId
+        )
+
+        if existing_user:
+            await conn.execute(
+                """
+                UPDATE user_handles
+                SET leetcode_handle = $1, leetcode_rating = $2
+                WHERE discord_id = $3
+                """,
+                username,
+                contestRating,
+                discordId
+            )
+        else:
+            await conn.execute(
+                """
+                INSERT INTO user_handles (discord_id, leetcode_handle, leetcode_rating)
+                VALUES ($1, $2, $3)
+                """,
+                discordId,
+                username,
+                contestRating
+            )
+
+        await conn.close()
+
+        await interaction.response.send_message(
+            f"Your LeetCode handle has been saved!\n"
+            f"**Rating:** {contestRating}"
+        )
+    except Exception as e:
+        await interaction.response.send_message(
+            f"An error occurred while saving your LeetCode handle: {e}"
+        )
+        print(e)
         
 @bot.tree.command(name="leaderboard", description="Show the top 10 Codeforces users in the server")
 async def leaderboard(interaction: Interaction):
@@ -189,55 +248,89 @@ async def leaderboard(interaction: Interaction):
 
 @bot.tree.command(name="update-rating", description="Update all Codeforces rating and list all changes.")
 async def update_rating(interaction: Interaction):
-    if "Kashyap" not in [role.name for role in interaction.user.roles]: # Replace `Kashyap` with whatever role your admin has, whether that be `Admin` or something else.
+    if "Kashyap" not in [role.name for role in interaction.user.roles]:
         await interaction.response.send_message("You do not have permissions to send this command.")
         return
     
     await interaction.response.defer()
     try:
         conn = await asyncpg.connect(DATABASE_URL)
-        rows = await conn.fetch("SELECT id, codeforces_handle, rating FROM user_handles")
+        rows = await conn.fetch("SELECT id, codeforces_handle, codeforces_rating, leetcode_handle, leetcode_rating FROM user_handles")
         
-        ratingChanges = []
+        cfRatingChanges = []
+        lcRatingChanges = []
+        
         for row in rows:
-            handle = row['codeforces_handle']
-            oldRating = row['rating']
+            userId = row["id"]
             
-            url = f"https://codeforces.com/api/user.rating?handle={handle}"
-            response = requests.get(url)
-            
-            if response.status_code == 200:
-                data = response.json()
-                if data['status'] == 'OK' and data['result']:
-                    latestRating = data['result'][-1]['newRating']
-                    
-                    if latestRating != oldRating:
-                        ratingChange = latestRating - oldRating
-                        ratingChanges.append(f"**{handle}:** {oldRating} --> {ratingChange:+} --> {latestRating}")
-                        
-                        await conn.execute("""
-                            UPDATE user_handles
-                            SET rating = $1
-                            WHERE id = $2
-                        """, latestRating, row['id'])
-            
-            else:
-                print(f"Failed to fetch rating for {handle}")
-        
-        await conn.close()
-        
-        embed = Embed(
-            title="Codeforces Rating Updates",
-            color=Colour.red()
-        )
+            if row["codeforces_handle"]:
+                cfHandle = row["codeforces_handle"]
+                oldCfRating = row["codeforces_rating"]
+                
+                cfUrl = f"https://codeforces.com/api/user.rating?handle={cfHandle}"
+                cfResponse = requests.get(cfUrl)
+                
+                if cfResponse.status_code == 200:
+                    cfData = cfResponse.json()
+                    if cfData["status"] == "OK" and cfData["result"]:
+                        latestCfRating = cfData["result"][-1]["newRating"]
 
-        if ratingChanges:
-            embed.description = "\n".join(ratingChanges)
+                        if latestCfRating != oldCfRating:
+                            cfChange = latestCfRating - (oldCfRating or 0)
+                            cfRatingChanges.append(f"**{cfHandle}:** {oldCfRating or 'N/A'} → {latestCfRating} ({cfChange:+})")
+
+                            await conn.execute(
+                                """
+                                UPDATE user_handles
+                                SET codeforces_rating = $1
+                                WHERE id = $2
+                                """,
+                                latestCfRating,
+                                userId,
+                            )
+                            
+            if row["leetcode_handle"]:
+                lcHandle = row["leetcode_handle"]
+                oldLcRating = row["leetcode_rating"]
+
+                lcUrl = f"https://alfa-leetcode-api.onrender.com/{lcHandle}/contest"
+                lcResponse = requests.get(lcUrl)
+
+                if lcResponse.status_code == 200:
+                    lcData = lcResponse.json()
+                    if lcData and lcData.get("contestParticipation"):
+                        latestLcRating = lcData["contestParticipation"][-1]["rating"]
+
+                        if latestLcRating != oldLcRating:
+                            lcChange = latestLcRating - (oldLcRating or 0)
+                            lcRatingChanges.append(f"**{lcHandle}:** {oldLcRating or 'N/A'} → {latestLcRating} ({lcChange:+})")
+
+                            await conn.execute(
+                                """
+                                UPDATE user_handles
+                                SET leetcode_rating = $1
+                                WHERE id = $2
+                                """,
+                                latestLcRating,
+                                userId,
+                            )
+
+        await conn.close()
+
+        embed = Embed(title="Rating Updates", color=Colour.blue())
+
+        if cfRatingChanges:
+            embed.add_field(name="Codeforces Rating Changes", value="\n".join(cfRatingChanges), inline=False)
         else:
-            embed.description = "**No rating changes**"
+            embed.add_field(name="Codeforces Rating Changes", value="**No rating changes**", inline=False)
+
+        if lcRatingChanges:
+            embed.add_field(name="LeetCode Rating Changes", value="\n".join(lcRatingChanges), inline=False)
+        else:
+            embed.add_field(name="LeetCode Rating Changes", value="**No rating changes**", inline=False)
 
         await interaction.followup.send(embed=embed)
-        
+
     except Exception as e:
         await interaction.followup.send("An error occurred while updating the ratings.")
         print(e)

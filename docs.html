@@ -69,6 +69,10 @@ git clone https://github.com/kashsuks/DSABot
 # Install dependencies
 pip install -r requirements.txt
 
+#Or if you're using a VENV (Virtual Environment)
+python3 -m venv {venv_name}
+source {venv_name}/bin/activate
+
 # Configure environment variables in the `.env` file
 DISCORD_TOKEN = 'your discord token'
 KATTIS_USERNAME = 'your kattis username'
@@ -97,12 +101,18 @@ DATABASE_URL = 'your postgresql database url'
             </section>
 
             <section id="cmd-problem">
-                <h3>Practice Command</h3>
+                <h3>Random Problem</h3>
                 <p>Generates practice problems based on difficulty level and topic.</p>
                 <pre><code class="language-python">
 /random-problem
                 </code></pre>
                 <h4>How Does This Command Work?</h4>
+                <p>By using the <b>OpenKattis</b> api alongside the credentials of a registered Kattis account, 
+                    you are able to use the <b>kt.suggest</b> 
+                    method which suggests problems for you account.
+                    This means that if you have access to a new Kattis account without any problems solved, 
+                    this should give a <b>pseudorandom</b> output.
+                </p>
             </section>
 
             <section id="cmd-algorithm">
@@ -111,6 +121,10 @@ DATABASE_URL = 'your postgresql database url'
                 <pre><code class="language-python">
 /random-algorithm
                 </code></pre>
+                <h4>How Does This Command Work?</h4>
+                <p>As of now, the Random Algorithm command uses a pre written/hard-coded array of algorithms
+                    of which, Algorithms are picked randomly and outputted.
+                </p>
             </section>
 
             <section id="cmd-leaderboard">
@@ -119,6 +133,11 @@ DATABASE_URL = 'your postgresql database url'
                 <pre><code class="language-python">
 /leaderboard
                 </code></pre>
+                <h4>How Does This Command Work?</h4>
+                <p>The command takes the Codeforces Rating of all the registered users and ranks them, from highest rating
+                    to lowest. After this process, the command processes the first 10 ratings that are then returned.
+                    Below this output(a red embed) is the users own rank. It shows their name and their rank on this leaderboard.
+                </p>
             </section>
 
             <section id="cmd-repo">
@@ -140,10 +159,13 @@ DATABASE_URL = 'your postgresql database url'
 
         <section id="faq">
             <h2>FAQ</h2>
-            <p>Common questions and troubleshooting tips for DSABot:</p>
-            <p>1. How do I add the bot to my server?</p>
-            <p>2. Can I customize the difficulty levels?</p>
-            <p>3. How does the scoring system work?</p>
+            <br>
+            <p><b>1. How do I add the bot to my server?</b></p>
+            <p><b>Ans</b> </p>
+            <br>
+            <p><b>2. Can I use this code for something else?</b></p>
+            <br>
+            <p><b>3. How does the scoring system work?</b></p>
         </section>
     </main>
 
